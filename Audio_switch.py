@@ -1,4 +1,6 @@
 import win32com.client
+import sys
+import ctypes
 
 possible_response = ["y","yes","yap","yeah",","]
 
@@ -28,3 +30,26 @@ if inp in possible_response:
     switch_audio(to_headphones)
 else:
     to_headphones = False
+
+
+
+
+
+# this should help to switch with admin righths
+
+def run_as_admin():
+    if sys.platform.startswith('win'):
+        try:
+            ctypes.windll.shell32.ShellExecuteW(
+                None, "runas", sys.executable, __file__, None, 1)
+        except ctypes.WinError:
+            # Uživatel zrušil spuštění jako správce nebo se nepodařilo získat potřebná oprávnění
+            print(
+                "User declined to start as Administrator or he/she lacks necessery permissions")
+            pass
+    else:
+        # Skript není spuštěn na platformě Windows
+        print("Script is not designed to run on other OS then Windows")
+        pass
+
+
