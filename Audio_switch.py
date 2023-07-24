@@ -1,6 +1,8 @@
 import win32com.client
 import sys
 import ctypes
+import sounddevice as sd
+
 
 possible_response = ["y","yes","yap","yeah",","]
 
@@ -22,19 +24,6 @@ def switch_audio(to_headphones):
         # switch to the sound system device
         endpoint.SetDefaultEndpoint("")
 
-
-inp = input("Do you want to switch audio system? y/n: ")
-
-if inp in possible_response:
-    to_headphones = True
-    switch_audio(to_headphones)
-else:
-    to_headphones = False
-
-
-
-
-
 # this should help to switch with admin righths
 
 def run_as_admin():
@@ -53,3 +42,31 @@ def run_as_admin():
         pass
 
 
+
+
+def main():
+    inp = input("Do you want to switch audio system? y/n: ")
+
+    if inp in possible_response:
+        to_headphones = True
+        run_as_admin()
+        switch_audio(to_headphones)
+    else:
+        to_headphones = False
+
+
+
+
+run_as_admin()
+print(sd.query_devices())
+print(sd.default.device)
+inp = input("1 - sluchátka, 0 - bedny: ")
+
+if inp == 1:
+    sd.default.device = [-1,1]
+else:
+    sd.default.device = [-1,3]
+    
+print(sd.query_devices())
+print("\n\n\n")
+print(sd.default.device)
