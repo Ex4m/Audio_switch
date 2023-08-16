@@ -1,1 +1,0 @@
-sd.query_devices()
