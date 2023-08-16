@@ -3,10 +3,26 @@ import sys
 import ctypes
 import sounddevice as sd
 
+def run_as_admin():
+    if sys.platform.startswith('win'):
+        try:
+            ctypes.windll.shell32.ShellExecuteW(
+                None, "runas", sys.executable, __file__, None, 1)
+        except ctypes.WinError:
+            # Uživatel zrušil spuštění jako správce nebo se nepodařilo získat potřebná oprávnění
+            print("User declined to start as Administrator or lacks necessary permissions")
+            sys.exit(1)
+    else:
+        # Skript není spuštěn na platformě Windows
+        print("Script is not designed to run on other OS than Windows")
+        sys.exit(1)
 
-possible_response = ["y","yes","yap","yeah",","]
 
-def switch_audio(to_headphones):
+
+
+
+
+"""def switch_audio(to_headphones):
     # create a Win32 COM object for the Windows audio endpoint
     endpoint = win32com.client.Dispatch("AudioEndpointControl.CoreAudioEndpointControl")
 
@@ -25,48 +41,50 @@ def switch_audio(to_headphones):
         endpoint.SetDefaultEndpoint("")
 
 # this should help to switch with admin righths
-
-def run_as_admin():
-    if sys.platform.startswith('win'):
-        try:
-            ctypes.windll.shell32.ShellExecuteW(
-                None, "runas", sys.executable, __file__, None, 1)
-        except ctypes.WinError:
-            # Uživatel zrušil spuštění jako správce nebo se nepodařilo získat potřebná oprávnění
-            print(
-                "User declined to start as Administrator or he/she lacks necessery permissions")
-            pass
-    else:
-        # Skript není spuštěn na platformě Windows
-        print("Script is not designed to run on other OS then Windows")
-        pass
+"""
 
 
 
+def switch_audio_output(output_device_index):
+    try:
+        # Získání seznamu dostupných zařízení
+        devices = sd.query_devices()
+        
+        # Získání aktuálního výchozího zařízení
+        current_default_device = sd.default.device
+        
+        # Nastavení nového výchozího zařízení
+        run_as_admin()
+        sd.default.device = [-1,output_device_index]
+
+        # Získání informací o novém výchozím zařízení
+        new_default_device = devices[output_device_index]['name']
+        print(current_default_device)
+        print(f"Audio output switched to: {new_default_device}")
+
+    except Exception as e:
+        print(f"Error switching audio output: {e}")
 
 def main():
-    inp = input("Do you want to switch audio system? y/n: ")
+    # Zobrazení dostupných zvukových zařízení
+    devices = sd.query_devices()
+    for i, device in enumerate(devices):
+        print(f"Device {i}: {device['name']}")
 
-    if inp in possible_response:
-        to_headphones = True
-        run_as_admin()
-        switch_audio(to_headphones)
-    else:
-        to_headphones = False
+    # Výběr zařízení pro přepnutí (pomocí indexu)
+    output_device_index = int(input("Enter the index of the device to switch to: "))
+
+    # Přepnutí výstupního zařízení
+    switch_audio_output(output_device_index)
+
+if __name__ == "__main__":
+    main()
 
 
-
-
-run_as_admin()
 print(sd.query_devices())
-print(sd.default.device)
-inp = input("1 - sluchátka, 0 - bedny: ")
+print("Konec")
 
-if inp == 1:
-    sd.default.device = [-1,1]
-else:
-    sd.default.device = [-1,3]
-    
-print(sd.query_devices())
-print("\n\n\n")
-print(sd.default.device)
+
+
+
+
