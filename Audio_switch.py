@@ -2,6 +2,7 @@ import win32com.client
 import sys
 import ctypes
 import sounddevice as sd
+import time
 
 def run_as_admin():
     if sys.platform.startswith('win'):
@@ -61,6 +62,7 @@ def switch_audio_output(output_device_index):
         new_default_device = devices[output_device_index]['name']
         print(current_default_device)
         print(f"Audio output switched to: {new_default_device}")
+        
 
     except Exception as e:
         print(f"Error switching audio output: {e}")
