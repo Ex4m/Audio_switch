@@ -4,6 +4,18 @@ import subprocess
 
 hook_active = True
 
+monitored_key = Key.f10
+# if -help written 
+
+def change_monitored_key(desired_key):
+    global monitored_key
+    if isinstance(desired_key, Key):
+        monitored_key = desired_key
+        print(f"Monitored key changed to {desired_key}")
+    else:
+        print("Invalid key. Please choose a valid Key from pynput.keyboard.Key.")
+
+
 def toggle_hook():
     global hook_active
     hook_active = not hook_active
@@ -11,7 +23,7 @@ def toggle_hook():
 def on_press(key):
     global hook_active
     if hook_active:
-        if key == Key.f10:
+        if key == monitored_key:
             print("F10 was pressed, executing powershell script...")
             try:
                 # Změňte cestu k vašemu PowerShell skriptu na správnou cestu.
