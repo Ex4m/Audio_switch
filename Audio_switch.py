@@ -27,7 +27,7 @@ def on_press(key):
             print("F10 was pressed, executing powershell script...")
             try:
                 # Změňte cestu k vašemu PowerShell skriptu na správnou cestu.
-                script_path = r'C:\Users\oz\OneDrive - GATEMA\Dokumenty\GitHub\Audio_switch\powershell_switcher.ps1'
+                script_path = r'C:\Users\Exa\Documents\GitHub\Audio_switch\powershell_switcher2.ps1'
                 subprocess.run(["powershell", "-File", script_path])
             except Exception as e:
                 print(f"An error occurred: {str(e)}")
@@ -35,3 +35,8 @@ def on_press(key):
 # Nastavení posluchače na zachycení kláves
 with Listener(on_press=on_press) as listener:
     listener.join()
+
+# https://github.com/frgnca/AudioDeviceCmdlets
+
+# Install-Module -Name AudioDeviceCmdlets -> yes -> a / yes
+# Set-ExecutionPolicy RemoteSigned -> yes
