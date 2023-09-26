@@ -5,20 +5,19 @@ import subprocess as sb
 import re
 import ctypes
 import sys
-from  dataclasses import dataclass
+from  dataclasses import dataclass, field
 # Run powershell get list comm to get info of audiodevices and then parse it back to list
 
 @dataclass
-class Engine:
+class SetupStuff:
     result: str = None
-    device_data: str = None
-    device_dict: str = None
+    device_data: list = field(default_factory=list) 
+    device_dict: dict = field(default_factory=dict)
+    selected_list: list = field(default_factory=list)
         
     def get_list(self):
         self.result = sb.run(["powershell", "Get-AudioDevice -list"], capture_output=True, text=True)
-        # Zkontrolujte návratový kód
         if self.result.returncode == 0:
-            # Získání výstupu jako řetězce
             self.result = str(self.result.stdout.strip())
             print(self.result)
         return self.result
@@ -39,30 +38,68 @@ class Engine:
                 'ID': device_id.strip(),
                 'Device': device.strip()
             }
+        
             
-        # Výpis výsledného slovníku
-        for index, device_info in self.device_dict.items():
-            print(f"Index: {index}")
-            print(f"Default: {device_info['Default']}")
-            print(f"DefaultCommunication: {device_info['DefaultCommunication']}")
-            print(f"Type: {device_info['Type']}")
-            print(f"Name: {device_info['Name']}")
-            print(f"ID: {device_info['ID']}")
-            print(f"Device: {device_info['Device']}")
-            
-            
-    def get_device_id(self, index):
-        # Zkontrolujte, zda existuje slovník
+    def get_device_key(self, value, index):
         if self.device_dict is None:
-            return None
+            raise TypeError("origin dictionary is not created, try use .get_list ->.convert_list first")
 
-        # Získání ID pro daný index
         device_info = self.device_dict.get(index)
         if device_info is not None:
-            return device_info['ID']
+            return device_info[value]
         else:
             return None
-            
+        
+    
+    def add_device(self, index):
+        device_info = self.get_device_key("ID", index)
+        if len(self.selected_list) < 2:
+            self.selected_list.append(device_info)
+            return self.selected_list
+        else:
+            raise ValueError(f"{self.get_device_key('Name',index)} cannot be added. Your list of selected items is full")
+        
+    def remove_device(self, position):
+        del self.selected_list[position]
+        return self.selected_list
+        
+    
+    def hot_key_swap(self):
+        pass
+    
+    def install_preq(self):
+        pass
+        #To DO
+    
+    def generate_pws(self):
+        if self(self.selected_list) == 2:
+            file_name = "swapper.ps1"
+
+            # Otevřete soubor pro zápis
+            with open(file_name, "w") as file:
+                # Zde můžete provádět zápis do souboru
+                file.write("# Toto je váš PowerShell skript.\n")
+                file.write("$headset = ") + self.selected_list[0] + ("\n")
+                file.write("$speakers = ") + self.selected_list[1] + ("\n")
+                file.write("Write-Host $variable\n")
+                # $headset_id = Get-AudioDevice -id $headset
+
+                # if ($headset_id.default){
+                #     Set-AudioDevice -id $speakers
+                #     Write-Output 'Speakers Active'
+                # }
+                # else{
+                #     Set-AudioDevice -id $headset
+                #     Write-Output 'Headset Active'
+                # }
+
+            # Soubor je automaticky uzavřen po opuštění bloku 'with'
+
+            print(f"Soubor {file_name} byl vytvořen/upraven a uložen.")
+        else:
+            raise ValueError(f"{self.selected_list} does not contain 2 items")
+
+        
             
     # def run_as_admin(self):
     #     if sys.platform.startswith('win'):
@@ -80,7 +117,7 @@ class Engine:
     #         pass
         
 
-e = Engine()
+e = SetupStuff()
 e.get_list()
 e.convert_list()
 print("konec")
