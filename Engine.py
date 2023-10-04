@@ -7,6 +7,7 @@ import ctypes
 import sys
 from  dataclasses import dataclass, field
 import time
+import os
 
 
 @dataclass
@@ -19,15 +20,16 @@ class SetupStuff:
     check: bool = None
    
     
-    def confirm(self, value):
+    def _confirm(self, value):
         if value.lower() in self.confirm_list:
             return True
         
-    def get_list(self):
+    def get_list(self, display_output = True):
         self.result = sb.run(["powershell", "Get-AudioDevice -list"], capture_output=True, text=True)
         if self.result.returncode == 0:
             self.result = str(self.result.stdout.strip())
-            print(self.result)
+            if display_output:
+                print(self.result)
         return self.result
         
        
@@ -82,6 +84,8 @@ class SetupStuff:
         Returns:
             list: list of selected items choosen for export to pws
         """
+        self.get_list(False)
+        self.convert_list()
         for i in index:
             device_info = self.get_device_key("ID", i)
             if len(self.selected_list) < 2:
@@ -92,7 +96,7 @@ class SetupStuff:
         
         
     def remove_device(self, position):
-        """Remove device from the selected_list
+        """Remove device from the selected_list. 0,1 choose position to delete or 2 to delete all
 
         Args:
             position (int): position of the item in a list you want to remove starting from 0
@@ -100,7 +104,10 @@ class SetupStuff:
         Returns:
             list: list of selected items choosen for export to pws
         """
-        del self.selected_list[position]
+        if position == 2:
+            self.selected_list.clear()
+        else:
+            del self.selected_list[position]
         return self.selected_list
         
     
@@ -118,10 +125,10 @@ class SetupStuff:
         print(output.stdout)
         if len(re.findall('AudioDeviceCmdlets', output.stdout)) > 0:
             self.check = True
-            print("Module is installed")
+            print("Audio Module is installed")
         else:
             self.check = False
-            print("Module is not Installed")
+            print("Audio Module is not Installed")
     
     def pws_command(self, command, admin = False):
         if admin == True:
@@ -182,8 +189,11 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
                 print("Installing ... 17%")
                 command = ["powershell", "Install-Module -Name AudioDeviceCmdlets -Force -Scope CurrentUser"]
                 self.pws_command( command)
-                print("Installing ... 42%")
-                self.get_list()
+                print("Installing ... 35%")
+                command = ["powershell", "Install-Module ps2exe -Force -Scope CurrentUser"]
+                self.pws_command( command)
+                print("Installing ... 48%")
+                self.get_list(False)
                 print("Installing ... 68%")
                 self.convert_list()
                 print("Installing ... 100%") 
@@ -197,10 +207,14 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
     
     def uninstall_preq(self):
         inp = input("Do you want to uninstall Powershell AudioDevice Module (y/n): ")
-        if self.confirm(inp) == True:
-            command = ["powershell", "Uninstall-Module -Name AudioDeviceCmdlets -Force"]
-            result = sb.run(command, capture_output=True, text=True)
-            print(result)
+        if self._confirm(inp):
+            try:
+                command = ["powershell", "Uninstall-Module -Name AudioDeviceCmdlets -Force"]
+                self.pws_command( command)
+                command = ["powershell", "Uninstall-Module ps2exe -Force"]
+                self.pws_command( command)
+            except Exception as error:
+                print(error)
         self.is_module_installed()
         if self.check == False:
             print("Module was sucesfully uninstalled")
@@ -235,9 +249,30 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
                 file.write(script_text)
 
             print(f"Soubor {output_file} byl vytvořen.")
+            
+            self._convert_to_exe()
         else:
             raise ValueError(f"{self.selected_list} does not contain 2 items")
 
+    def _convert_to_exe(self):
+        """Converts ps1 script to executable
+
+        Raises:
+            NameError: Module ps2exe is not installed and is required to proceed
+        """
+        command = ["powershell", "Get-InstalledModule"]
+        result = self.pws_command(command)
+        if len(re.findall('ps2exe', result.stdout)) < 0:
+            raise NameError("ps2exe module is not installed, run install_preq")
+        current_directory = os.getcwd() 
+        print(current_directory)
+        try:
+            command = ["powershell", f"Invoke-PS2EXE '{current_directory}\swapper.ps1' '{current_directory}\SuperSwapper.exe'"]  
+            self.pws_command(command)
+        except Exception as error:
+            print(error)
+        else:
+            print("File was converted to .exe sucessfully")
         
             
     def run_as_admin(self):
@@ -258,9 +293,50 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
             pass
         
 
-e = SetupStuff()
+# e = SetupStuff()
 # e.get_list()
 # e.convert_list()
 # e.install_preq()
+# e.uninstall_preq()
 # e.is_module_installed()
 print("konec")
+
+
+# if __name__ == "__main__":
+#     audio_manager = SetupStuff()
+#     audio_manager.run_as_admin()
+
+#     while True:
+#         print("\nAudio Device Manager Menu:")
+#         print("1. Get Audio Device List")
+#         print("2. Add Audio Device to Selected List")
+#         print("3. Remove Audio Device from Selected List")
+#         print("4. Generate PowerShell Script")
+#         print("5. Install PowerShell Module")
+#         print("6. Uninstall PowerShell Module")
+#         print("7. Exit")
+
+#         choice = input("Enter your choice: ")
+
+#         match choice:
+#             case "1":
+#                 audio_manager.get_list()
+#                 audio_manager.convert_list()
+#                 print("Audio Device List retrieved.")
+#             case "2":
+#                 indices = input("Enter the indices of the audio devices to add (comma-separated): ").split(",")
+#                 audio_manager.add_device(*map(int, indices))
+#             case "3":
+#                 position = int(input("Enter the position of the audio device to remove (0 for first, 1 for second, 2 for all): "))
+#                 audio_manager.remove_device(position)
+#             case "4":
+#                 audio_manager.generate_pws_script()
+#             case "5":
+#                 audio_manager.install_module()
+#             case "6":
+#                 audio_manager.uninstall_module()
+#             case "7":
+#                 print("Exiting...")
+#                 break
+#             case _:
+#                 print("Invalid choice. Please select a valid option.")
