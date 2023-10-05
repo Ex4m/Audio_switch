@@ -8,7 +8,8 @@ import sys
 from  dataclasses import dataclass, field
 import time
 import os
-
+import pickle
+from pynput.keyboard import Key
 
 @dataclass
 class SetupStuff:
@@ -111,8 +112,19 @@ class SetupStuff:
         return self.selected_list
         
     
-    def hot_key_swap(self):
-        pass
+    def set_hotKey_swap(self):
+        inp_key = input("Your Key: ")
+        if isinstance(inp_key, Key):
+            with open('settings.pkl', 'wb') as f:
+                pickle.dump(inp_key, f)
+                print("Exported and saved")
+        else:
+            raise TypeError(f"Your key '{inp_key}' was not recogniyed")   
+        
+    def get_hotKey_swap(self):
+        #toto by mohla využívat podclassa v tom lightweight souboru aby si natáhla co je potřeba
+        pass     
+        
     
     def is_module_installed(self):
         """Check whenever the AudioDevice Module is already installed or not
