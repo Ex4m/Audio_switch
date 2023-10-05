@@ -1,7 +1,9 @@
 from pynput.keyboard import Key, Listener
 import subprocess
+import os
 
 
+current_directory = os.getcwd() 
 hook_active = True
 
 monitored_key = Key.f10
@@ -27,7 +29,7 @@ def on_press(key):
             print("F10 was pressed, executing powershell script...")
             try:
                 # Změňte cestu k vašemu PowerShell skriptu na správnou cestu.
-                script_path = r'C:\Users\Exa\Documents\GitHub\Audio_switch\powershell_switcher2.ps1'
+                script_path = f"{current_directory}\swapper.ps1"
                 subprocess.run(["powershell", "-File", script_path])
             except Exception as e:
                 print(f"An error occurred: {str(e)}")
