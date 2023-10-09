@@ -1,5 +1,4 @@
 # !/usr/bin/env python
-# %%
 
 import subprocess as sb
 import re
@@ -9,7 +8,6 @@ from dataclasses import dataclass, field
 import time
 import os
 import pickle
-from pynput.keyboard import Key
 import keyboard
 
 
@@ -114,18 +112,19 @@ class SetupStuff:
 
     def set_hotKey_swap(self):
         print("Press the key you wish to save: ")
-        inp_key = keyboard.read_key()
-        print(f"Your key is: {inp_key}")
+        inp_key_str = keyboard.read_key()
+        print(f"Your key is: {inp_key_str}")
         with open(f"{os.path.dirname(__file__)}\\settings.pkl", 'wb') as f:
-            pickle.dump(inp_key, f)
+            pickle.dump(inp_key_str, f)
             print("Exported and saved")
 
     def get_hotKey_swap(self, path=os.path.dirname(__file__)):
         # toto by mohla využívat podclassa v tom lightweight souboru aby si natáhla co je potřeba
         try:
             with open(f"{path}\\settings.pkl", 'rb') as f:
-                inp_key = pickle.load(f)
-                print(f"Loaded key is: {inp_key}")
+                inp_key_str = pickle.load(f)
+                print(f"Loaded key is: {inp_key_str}")
+                return inp_key_str
         except Exception as error:
             print(error)
 
@@ -241,7 +240,7 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
         if self.check == False:
             print("Module was sucesfully uninstalled")
 
-    def generate_pws(self):
+    def generate_pws_exe(self):
         """ Generate a pws file which is execution script for device swap
         """
         if len(self.selected_list) == 2:
@@ -273,7 +272,8 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
 
             self._convert_to_exe()
         else:
-            raise ValueError(f"{self.selected_list} does not contain 2 items")
+            raise ValueError(
+                f"{self.selected_list} does not contain 2 items. Check your selected list")
 
     def _convert_to_exe(self):
         """Converts ps1 script to executable
@@ -290,11 +290,15 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
         try:
             command = [
                 "powershell", f"Invoke-PS2EXE '{current_directory}\swapper.ps1' '{current_directory}\SuperSwapper.exe'"]
-            self.pws_command(command)
+            result = self.pws_command(command)
         except Exception as error:
             print(error)
         else:
-            print("File was converted to .exe sucessfully")
+            if (result.stderr or result.stdout == '') or result.returncode == 0:
+                print("File was converted to .exe sucessfully")
+            else:
+                print(
+                    f"Somthing has gone wrong in conversion\n{result.stderr},{result.stdout}")
 
     def run_as_admin(self):
         """Run a function as an admin
@@ -324,41 +328,63 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
 print("Init done")
 
 
-# if __name__ == "__main__":
-#     audio_manager = SetupStuff()
-#     audio_manager.run_as_admin()
+if __name__ == "__main__":
+    audio_manager = SetupStuff()
+    audio_manager.run_as_admin()
 
-#     while True:
-#         print("\nAudio Device Manager Menu:")
-#         print("1. Get Audio Device List")
-#         print("2. Add Audio Device to Selected List")
-#         print("3. Remove Audio Device from Selected List")
-#         print("4. Generate PowerShell Script")
-#         print("5. Install PowerShell Module")
-#         print("6. Uninstall PowerShell Module")
-#         print("7. Exit")
+    print("Welcome to the Audio Setup Stuff program!")
+    print("================================")
+    print("To select an option, use the corresponding number below.")
+    print("If you are here for the first time start with Install option 6.")
+    print("Then Get the Audio Device List and locate desired devices for switch")
+    print("Memorize just its ID and add it to selected list with option 2")
+    print("Select your Activation hotkey for switch with option 8")
+    print("Finally Generate the executable script with option 5")
+    print("================================")
+    print("In second phase just start the newbord Audio_switch.exe")
+    print("Once you press the hotkey your output should change accordingly")
+    print("================================")
 
-#         choice = input("Enter your choice: ")
+    while True:
+        input("Press any key to continue: ")
+        print("\nAudio Device Manager Menu:")
+        print("1. Get Audio Device List")
+        print("2. Add Audio Device to Selected List")
+        print("3. Remove Audio Device from Selected List")
+        print("4. Show Selected list")
+        print("5. Generate PowerShell/Exe Script")
+        print("6. Install PowerShell Modules")
+        print("7. Uninstall PowerShell Modules")
+        print("8. Set the activation Hotkey")
+        print("9. Exit")
 
-#         match choice:
-#             case "1":
-#                 audio_manager.get_list()
-#                 audio_manager.convert_list()
-#                 print("Audio Device List retrieved.")
-#             case "2":
-#                 indices = input("Enter the indices of the audio devices to add (comma-separated): ").split(",")
-#                 audio_manager.add_device(*map(int, indices))
-#             case "3":
-#                 position = int(input("Enter the position of the audio device to remove (0 for first, 1 for second, 2 for all): "))
-#                 audio_manager.remove_device(position)
-#             case "4":
-#                 audio_manager.generate_pws_script()
-#             case "5":
-#                 audio_manager.install_module()
-#             case "6":
-#                 audio_manager.uninstall_module()
-#             case "7":
-#                 print("Exiting...")
-#                 break
-#             case _:
-#                 print("Invalid choice. Please select a valid option.")
+        choice = input("Enter your choice: ")
+
+        match choice:
+            case "1":
+                audio_manager.get_list()
+                audio_manager.convert_list()
+                print("Audio Device List retrieved.")
+            case "2":
+                indices = input(
+                    "Enter the IDs of the audio devices to add (comma-separated): ").split(",")
+                audio_manager.add_device(*map(int, indices))
+            case "3":
+                position = int(input(
+                    "Enter the position of the audio device to remove (0 for first, 1 for second, 2 for all): "))
+                audio_manager.remove_device(position)
+            case "4":
+                print(audio_manager.selected_list)
+            case "5":
+                audio_manager.generate_pws_exe()
+            case "6":
+                audio_manager.install_preq()
+            case "7":
+                audio_manager.uninstall_preq()
+            case "8":
+                audio_manager.set_hotKey_swap()
+            case "9":
+                print("Exiting...")
+                break
+            case _:
+                print("Invalid choice. Please select a valid option.")

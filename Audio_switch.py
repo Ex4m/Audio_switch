@@ -1,44 +1,49 @@
-from pynput.keyboard import Key, Listener
-import subprocess
+import subprocess as sb
 import os
+import keyboard
+from Engine import SetupStuff
 
 
-current_directory = os.getcwd() 
+e = SetupStuff()
+
+monitored_key = e.get_hotKey_swap()
+current_directory = os.path.dirname(__file__)
 hook_active = True
-
-monitored_key = Key.f10
-# if -help written 
-
-def change_monitored_key(desired_key):
-    global monitored_key
-    if isinstance(desired_key, Key):
-        monitored_key = desired_key
-        print(f"Monitored key changed to {desired_key}")
-    else:
-        print("Invalid key. Please choose a valid Key from pynput.keyboard.Key.")
+swapper = "Audio_switch.exe"
 
 
 def toggle_hook():
     global hook_active
     hook_active = not hook_active
 
-def on_press(key):
+
+def locate_file(swapper, current_directory):
+    for root, directory, files in os.walk(current_directory):
+        if swapper in files:
+            return os.path.join(root, swapper)
+    return None
+
+
+def on_key_event(keyboard_event):
     global hook_active
     if hook_active:
-        if key == monitored_key:
-            print("F10 was pressed, executing powershell script...")
+        if keyboard_event.name == monitored_key:
+            print(f"{monitored_key} was pressed, executing powershell script...")
             try:
-                # Změňte cestu k vašemu PowerShell skriptu na správnou cestu.
-                script_path = f"{current_directory}\swapper.ps1"
-                subprocess.run(["powershell", "-File", script_path])
+                exe_path = locate_file(swapper, current_directory)
+                if exe_path is None:
+                    print("Exe not found")
+                else:
+                    print(f"Exe found on this path {exe_path}")
+                    sb.run([exe_path], shell=True)
+                # script_path = f"{current_directory}\\swapper.ps1"
+                # subprocess.run(["powershell", "-File", script_path])
             except Exception as e:
                 print(f"An error occurred: {str(e)}")
 
+
 # Nastavení posluchače na zachycení kláves
-with Listener(on_press=on_press) as listener:
-    listener.join()
+keyboard.on_press(on_key_event)
 
-# https://github.com/frgnca/AudioDeviceCmdlets
-
-# Install-Module -Name AudioDeviceCmdlets -> yes -> a / yes
-# Set-ExecutionPolicy RemoteSigned -> yes
+# Pokud chcete zachytávat události klávesnice i mimo hlavní smyčku, můžete použít keyboard.wait()
+keyboard.wait()
