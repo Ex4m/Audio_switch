@@ -1,5 +1,5 @@
 # !/usr/bin/env python
-
+# %%
 import subprocess as sb
 import re
 import ctypes
@@ -13,7 +13,6 @@ import keyboard
 
 @dataclass
 class SetupStuff:
-    pass
     result: str = None
     confirm_list: set = ("y", "yes", "yeah", "ok", ".")
     device_data: list = field(default_factory=list)
@@ -382,6 +381,7 @@ if __name__ == "__main__":
             case "7":
                 audio_manager.uninstall_preq()
             case "8":
+                time.sleep(0.5)
                 audio_manager.set_hotKey_swap()
             case "9":
                 print("Exiting...")
