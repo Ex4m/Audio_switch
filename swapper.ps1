@@ -1,6 +1,6 @@
             ###### Swapper.Core #######
-            $headset = '{0.0.0.00000000}.{0e902266-6e9f-4561-a602-e90f51ff9971}'
-            $speakers = '{0.0.0.00000000}.{7f65aae3-724e-4326-8a92-3c525dc21d20}'
+            $headset = '{0.0.0.00000000}.{077d7e7d-06c9-41b0-adcc-763727e14c4d}'
+            $speakers = '{0.0.0.00000000}.{436c68cf-f799-4595-ba61-d71dfb3468c0}'
 
             $headset_id = Get-AudioDevice -id $headset
 
