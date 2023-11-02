@@ -6,9 +6,8 @@ AudioSwitch is a Windows application that allows you to easily switch between yo
 
 1. Proceed to install folder
 2. Download the latest version of 'AudioSwitch.exe'  or 'Audio_switch.py' and 'Engine.py' from GitHub.
-3. Extract the ZIP file.
-4. Run `Engine.py`
-5. Follow instructions in the interface of 'Engine.py'
+3. Run `Engine.py` or 'AudioSwitch.exe'
+4. Follow instructions in the interface of 'Engine.py'(AudioSwitch.exe)
 
 ## Usage
 
