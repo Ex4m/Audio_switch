@@ -7,16 +7,20 @@ import sys
 
 e = SetupStuff()
 
-
+# -------------------------------------------------------------------
+# pythonw.exe your_script.py     to run without any window
+# Start Hook zatím nefunguje
+# -------------------------------------------------------------------
 if getattr(sys, 'frozen', False):
     current_directory = sys._MEIPASS
 else:
-    current_directory = os.path.dirname(os.path.abspath(__file__))
+    current_directory = os.path.dirname(os.path.realpath(__file__))
 
 print(current_directory)
-# Toto zatím vrací pouze celý seznam a ne jen tu jednu klávesu o kterou žádáš
-monitored_key = e.get_hotKey(HotkeyType.TRIGGER)
-print(monitored_key)
+trigger_key = e.get_hotKey(HotkeyType.TRIGGER)
+start_key = e.get_hotKey(HotkeyType.START_HOOK)
+end_key = e.get_hotKey(HotkeyType.END_HOOK)
+print(f"Trigger:{trigger_key}\nStart hook:{start_key}\nEnd hook:{end_key}")
 hook_active = True
 swapper = "swapper.ps1"  # "Audio_switch.exe"
 last_alt_time = 0
@@ -26,7 +30,7 @@ inform = True
 def toggle_hook():
     global hook_active
     hook_active = not hook_active
-
+    print(f"Hook {'enabled' if hook_active else 'disabled'}")
 
 def locate_file(swapper, current_directory):
     for root, directory, files in os.walk(current_directory):
@@ -61,8 +65,8 @@ def on_key_event(keyboard_event):
     if hook_active:
         if inform:
             print(f"Pressed key:" + keyboard_event.name)
-        if keyboard_event.name == monitored_key:
-            print(f"{monitored_key} was pressed, executing powershell script...")
+        if keyboard_event.name == trigger_key:
+            print(f"{trigger_key} was pressed, executing powershell script...")
             try:
                 # exe_path = locate_file(swapper, current_directory)
                 swapper_path = locate_file(swapper, current_directory)
@@ -77,10 +81,18 @@ def on_key_event(keyboard_event):
             except Exception as e:
                 print(f"An error occurred: {str(e)}")
 
-        if keyboard_event.name == 'alt':
-            last_alt_time = time.time()
-        elif keyboard_event.name == 'shift' and time.time() - last_alt_time < 0.5:
-            print("Combo 'left alt + left shift' pressed")
+        elif keyboard_event.name == start_key:
+            print(f"{start_key} was pressed, starting hook...")
+            hook_active = True
+
+        elif keyboard_event.name == end_key:
+            print(f"{end_key} was pressed, stopping hook...")
+            hook_active = False
+            
+        # if keyboard_event.name == 'alt':
+        #     last_alt_time = time.time()
+        # elif keyboard_event.name == 'shift' and time.time() - last_alt_time < 0.5:
+        #     print("Combo 'left alt + left shift' pressed")
 
             # sb.run([theme_switcher.themeSwitcher_path,
             #        theme_switcher.switch_theme()])

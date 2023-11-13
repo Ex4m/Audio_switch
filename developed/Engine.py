@@ -130,18 +130,18 @@ class SetupStuff:
             time.sleep(0.5)
             inp_key_str = keyboard.read_key()
             print(f"Your key is: {inp_key_str}")
-            with open(f"{os.path.dirname(__file__)}\\settings.pkl", 'wb') as f:
+            with open(f"{os.path.dirname(os.path.realpath(__file__))}\\settings.pkl", 'wb') as f:
                 self.hotkey_bounds[hotkey_type] = inp_key_str
                 pickle.dump(self.hotkey_bounds, f)
                 print(f"{inp_key_str} exported and saved as type: {hotkey_type}")
         else:
             return "hotkey type not found, try again"
         
-    def get_hotKey(self, hotkey_type, path=os.path.dirname(__file__)):
+    def get_hotKey(self, hotkey_type, path=os.path.dirname(os.path.realpath(__file__))):
         try:
             with open(f"{path}\\settings.pkl", 'rb') as f:
-                loaded_key = pickle.load(f)
-                self.hotkey_bounds[hotkey_type] = loaded_key
+                self.hotkey_bounds = pickle.load(f)
+                loaded_key = self.hotkey_bounds.get(hotkey_type)
                 if loaded_key:
                     print(f"Loaded key for {hotkey_type} is: {loaded_key}")
                 return loaded_key
@@ -306,7 +306,7 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
         result = self.pws_command(command)
         if len(re.findall('ps2exe', result.stdout)) < 0:
             raise NameError("ps2exe module is not installed, run install_preq")
-        current_directory = os.path.dirname(__file__)
+        current_directory = os.path.dirname(os.path.realpath(__file__))
         print(current_directory)
         try:
             command = [
