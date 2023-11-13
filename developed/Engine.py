@@ -25,6 +25,12 @@ class SetupStuff:
     selected_list: list = field(default_factory=list)
     check: bool = None
 
+    hotkey_bounds = {
+        HotkeyType.TRIGGER: 'insert',  
+        HotkeyType.START_HOOK: 'scroll lock',  
+        HotkeyType.END_HOOK: 'pause'  
+    }
+     
     def _confirm(self, value):
         if value.lower() in self.confirm_list:
             return True
@@ -114,31 +120,34 @@ class SetupStuff:
             del self.selected_list[position]
         return self.selected_list
 
-    def set_hotKey(self, hotkey_type, key):
-        print(f"Press the key you wish to save for {hotkey_type.name}: ")
-        inp_key_str = keyboard.read_key()
-        print(f"Your key is: {inp_key_str}")
-        with open(f"{os.path.dirname(__file__)}\\settings.pkl", 'wb') as f:
-            settings = {
-                HotkeyType.TRIGGER: None,
-                HotkeyType.START_HOOK: None,
-                HotkeyType.END_HOOK: None
-            }
-            settings[hotkey_type] = inp_key_str
-            pickle.dump(settings, f)
-            print(f"{inp_key_str} exported and saved as type: {hotkey_type.name}")
-
+    def show_hotkeys(self):
+        for key, value in self.hotkey_bounds.items():
+            print(f"{key}: {value}")
+        
+    def set_hotKey(self, hotkey_type):
+        if hotkey_type in self.hotkey_bounds:
+            print(f"Press the key you wish to save for {hotkey_type}: ")
+            time.sleep(0.5)
+            inp_key_str = keyboard.read_key()
+            print(f"Your key is: {inp_key_str}")
+            with open(f"{os.path.dirname(__file__)}\\settings.pkl", 'wb') as f:
+                self.hotkey_bounds[hotkey_type] = inp_key_str
+                pickle.dump(self.hotkey_bounds, f)
+                print(f"{inp_key_str} exported and saved as type: {hotkey_type}")
+        else:
+            return "hotkey type not found, try again"
+        
     def get_hotKey(self, hotkey_type, path=os.path.dirname(__file__)):
         try:
             with open(f"{path}\\settings.pkl", 'rb') as f:
-                settings = pickle.load(f)
-                inp_key_str = settings.get(hotkey_type)
-                if inp_key_str:
-                    print(f"Loaded key for {hotkey_type.name} is: {inp_key_str}")
-                return inp_key_str
+                loaded_key = pickle.load(f)
+                self.hotkey_bounds[hotkey_type] = loaded_key
+                if loaded_key:
+                    print(f"Loaded key for {hotkey_type} is: {loaded_key}")
+                return loaded_key
         except Exception as error:
             print(error)
-
+            
 
     def is_module_installed(self):
         """Check whenever the AudioDevice Module is already installed or not
@@ -342,6 +351,7 @@ print("Init done")
 
 if __name__ == "__main__":
     audio_manager = SetupStuff()
+  
     audio_manager.run_as_admin()
 
     print("Welcome to the Audio Setup Stuff program!")
@@ -395,7 +405,14 @@ if __name__ == "__main__":
                 audio_manager.uninstall_preq()
             case "8":
                 time.sleep(0.5)
-                audio_manager.set_hotKey_swap()
+                audio_manager.show_hotkeys()
+                hotkey_sel = input("Select one of the above mentioned types (i.e.TRIGGER) for the hotkey you wish to edit: ").upper()
+                try:
+                    hotkey_type = getattr(HotkeyType, hotkey_sel)
+                    audio_manager.set_hotKey(hotkey_type)
+                except AttributeError:
+                    print("Hotkey type not found, try again")
+                
             case "9":
                 print("Exiting...")
                 break

@@ -1,7 +1,7 @@
 import subprocess as sb
 import os
 import keyboard
-from Engine import SetupStuff
+from Engine import SetupStuff, HotkeyType
 import time
 import sys
 
@@ -14,12 +14,13 @@ else:
     current_directory = os.path.dirname(os.path.abspath(__file__))
 
 print(current_directory)
-
-monitored_key = e.get_hotKey_swap()
+# Toto zatím vrací pouze celý seznam a ne jen tu jednu klávesu o kterou žádáš
+monitored_key = e.get_hotKey(HotkeyType.TRIGGER)
+print(monitored_key)
 hook_active = True
 swapper = "swapper.ps1"  # "Audio_switch.exe"
 last_alt_time = 0
-inform = False
+inform = True
 
 
 def toggle_hook():
