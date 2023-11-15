@@ -32,10 +32,10 @@ def toggle_hook():
     hook_active = not hook_active
     print(f"Hook {'enabled' if hook_active else 'disabled'}")
 
-def locate_file(swapper, current_directory):
+def locate_file(file, current_directory):
     for root, directory, files in os.walk(current_directory):
-        if swapper in files:
-            return os.path.join(root, swapper)
+        if file in files:
+            return os.path.join(root, file)
     return None
 
 
@@ -55,8 +55,18 @@ def locate_file(swapper, current_directory):
 #             self.switch = True
 #             return self.theme_path_EN
 
-
 # theme_switcher = ThemeSwitcher()
+
+# PWS
+# $proc = Get-Process | Where-Object { $_.Name -eq "NiceTaskbar" }
+# $proc.Id
+# $proc.Id
+
+
+        
+
+nt_path = 'C:\\Program Files\\WindowsApps\\30881xwl.NiceTaskbar_1.0.6.0_x86__9ammpd0196578\\NiceTaskbar.exe'
+
 
 
 def on_key_event(keyboard_event):
@@ -89,13 +99,13 @@ def on_key_event(keyboard_event):
             print(f"{end_key} was pressed, stopping hook...")
             hook_active = False
             
-        # if keyboard_event.name == 'alt':
-        #     last_alt_time = time.time()
-        # elif keyboard_event.name == 'shift' and time.time() - last_alt_time < 0.5:
-        #     print("Combo 'left alt + left shift' pressed")
+        if keyboard_event.name == 'alt':
+            last_alt_time = time.time()
+        elif keyboard_event.name == 'shift' and time.time() - last_alt_time < 0.5:
+            print("Combo 'left alt + left shift' pressed")
 
-            # sb.run([theme_switcher.themeSwitcher_path,
-            #        theme_switcher.switch_theme()])
+            
+            sb.run(nt_path)
 
 
 # Nastavení posluchače na zachycení kláves
