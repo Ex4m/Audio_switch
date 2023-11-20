@@ -1,5 +1,5 @@
 # !/usr/bin/env python
-# %%
+
 import subprocess as sb
 import re
 import ctypes
@@ -9,15 +9,11 @@ import time
 import os
 import pickle
 import keyboard
-from enum import Enum
 
-class HotkeyType(Enum):
-    TRIGGER = 1
-    START_HOOK = 2
-    END_HOOK = 3
 
 @dataclass
 class SetupStuff:
+    pass
     result: str = None
     confirm_list: set = ("y", "yes", "yeah", "ok", ".")
     device_data: list = field(default_factory=list)
@@ -25,12 +21,6 @@ class SetupStuff:
     selected_list: list = field(default_factory=list)
     check: bool = None
 
-    hotkey_bounds = {
-        HotkeyType.TRIGGER: 'insert',  
-        HotkeyType.START_HOOK: 'scroll lock',  
-        HotkeyType.END_HOOK: 'pause'  
-    }
-     
     def _confirm(self, value):
         if value.lower() in self.confirm_list:
             return True
@@ -120,34 +110,23 @@ class SetupStuff:
             del self.selected_list[position]
         return self.selected_list
 
-    def show_hotkeys(self):
-        for key, value in self.hotkey_bounds.items():
-            print(f"{key}: {value}")
-        
-    def set_hotKey(self, hotkey_type):
-        if hotkey_type in self.hotkey_bounds:
-            print(f"Press the key you wish to save for {hotkey_type}: ")
-            time.sleep(0.5)
-            inp_key_str = keyboard.read_key()
-            print(f"Your key is: {inp_key_str}")
-            with open(f"{os.path.dirname(os.path.realpath(__file__))}\\settings.pkl", 'wb') as f:
-                self.hotkey_bounds[hotkey_type] = inp_key_str
-                pickle.dump(self.hotkey_bounds, f)
-                print(f"{inp_key_str} exported and saved as type: {hotkey_type}")
-        else:
-            return "hotkey type not found, try again"
-        
-    def get_hotKey(self, hotkey_type, path=os.path.dirname(os.path.realpath(__file__))):
+    def set_hotKey_swap(self):
+        print("Press the key you wish to save: ")
+        inp_key_str = keyboard.read_key()
+        print(f"Your key is: {inp_key_str}")
+        with open(f"{os.path.dirname(__file__)}\\settings.pkl", 'wb') as f:
+            pickle.dump(inp_key_str, f)
+            print("Exported and saved")
+
+    def get_hotKey_swap(self, path=os.path.dirname(__file__)):
+        # toto by mohla využívat podclassa v tom lightweight souboru aby si natáhla co je potřeba
         try:
             with open(f"{path}\\settings.pkl", 'rb') as f:
-                self.hotkey_bounds = pickle.load(f)
-                loaded_key = self.hotkey_bounds.get(hotkey_type)
-                if loaded_key:
-                    print(f"Loaded key for {hotkey_type} is: {loaded_key}")
-                return loaded_key
+                inp_key_str = pickle.load(f)
+                print(f"Loaded key is: {inp_key_str}")
+                return inp_key_str
         except Exception as error:
             print(error)
-            
 
     def is_module_installed(self):
         """Check whenever the AudioDevice Module is already installed or not
@@ -264,37 +243,48 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
     def generate_pws_exe(self):
         """ Generate a pws file which is execution script for device swap
         """
-        if len(self.selected_list) == 2:
-            output_file = "swapper.ps1"
-            headset = self.selected_list[0]
-            speakers = self.selected_list[1]
+        try:
+            if len(self.selected_list) == 2:
+                output_file = "swapper.ps1"
+                headset = self.selected_list[0]
+                speakers = self.selected_list[1]
 
-            # Vytvořte text skriptu
-            script_text = f"""\
-            ###### Swapper.Core #######
-            $headset = '{headset}'
-            $speakers = '{speakers}'
+                # Získejte cestu ke spouštěnému skriptu
+                script_directory = os.path.dirname(os.path.abspath(__file__))
 
-            $headset_id = Get-AudioDevice -id $headset
+                # Nastavte aktuální pracovní adresář na adresář skriptu
+                os.chdir(script_directory)
 
-            if ($headset_id.default) {{
-                Set-AudioDevice -id $speakers
-                Write-Output 'Speakers Active'
-            }} else {{
-                Set-AudioDevice -id $headset
-                Write-Output 'Headset Active'
-            }}
-            """
+                # Vytvořte text skriptu
+                script_text = f"""\
+                ###### Swapper.Core #######
+                $headset = '{headset}'
+                $speakers = '{speakers}'
 
-            with open(output_file, "w") as file:
-                file.write(script_text)
+                $headset_id = Get-AudioDevice -id $headset
 
-            print(f"Soubor {output_file} byl vytvořen.")
+                if ($headset_id.default) {{
+                    Set-AudioDevice -id $speakers
+                    Write-Output 'Speakers Active'
+                }} else {{
+                    Set-AudioDevice -id $headset
+                    Write-Output 'Headset Active'
+                }}
+                """
 
-            self._convert_to_exe()
-        else:
-            raise ValueError(
-                f"{self.selected_list} does not contain 2 items. Check your selected list")
+                # Vytvořte soubor
+                with open(output_file, "w") as file:
+                    file.write(script_text)
+
+                print(
+                    f"Soubor {output_file} byl vytvořen v adresáři {script_directory}.")
+            else:
+                raise ValueError(
+                    f"{self.selected_list} does not contain 2 items. Check your selected list")
+        except Exception as e:
+            print(f"Při generování souboru došlo k chybě: {e}")
+
+        self._convert_to_exe()
 
     def _convert_to_exe(self):
         """Converts ps1 script to executable
@@ -306,7 +296,7 @@ Unrestricted: Všechny skripty mohou být spuštěny bez omezení."""
         result = self.pws_command(command)
         if len(re.findall('ps2exe', result.stdout)) < 0:
             raise NameError("ps2exe module is not installed, run install_preq")
-        current_directory = os.path.dirname(os.path.realpath(__file__))
+        current_directory = os.path.dirname(__file__)
         print(current_directory)
         try:
             command = [
@@ -351,7 +341,6 @@ print("Init done")
 
 if __name__ == "__main__":
     audio_manager = SetupStuff()
-  
     audio_manager.run_as_admin()
 
     print("Welcome to the Audio Setup Stuff program!")
@@ -404,15 +393,7 @@ if __name__ == "__main__":
             case "7":
                 audio_manager.uninstall_preq()
             case "8":
-                time.sleep(0.5)
-                audio_manager.show_hotkeys()
-                hotkey_sel = input("Select one of the above mentioned types (i.e.TRIGGER) for the hotkey you wish to edit: ").upper()
-                try:
-                    hotkey_type = getattr(HotkeyType, hotkey_sel)
-                    audio_manager.set_hotKey(hotkey_type)
-                except AttributeError:
-                    print("Hotkey type not found, try again")
-                
+                audio_manager.set_hotKey_swap()
             case "9":
                 print("Exiting...")
                 break

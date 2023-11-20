@@ -4,6 +4,7 @@ import keyboard
 from Engine import SetupStuff, HotkeyType
 import time
 import sys
+import pickle
 
 e = SetupStuff()
 
@@ -31,6 +32,7 @@ def toggle_hook():
     global hook_active
     hook_active = not hook_active
     print(f"Hook {'enabled' if hook_active else 'disabled'}")
+
 
 def locate_file(file, current_directory):
     for root, directory, files in os.walk(current_directory):
@@ -63,10 +65,7 @@ def locate_file(file, current_directory):
 # $proc.Id
 
 
-        
-
 nt_path = 'C:\\Program Files\\WindowsApps\\30881xwl.NiceTaskbar_1.0.6.0_x86__9ammpd0196578\\NiceTaskbar.exe'
-
 
 
 def on_key_event(keyboard_event):
@@ -98,21 +97,48 @@ def on_key_event(keyboard_event):
         elif keyboard_event.name == end_key:
             print(f"{end_key} was pressed, stopping hook...")
             hook_active = False
-            
+
         if keyboard_event.name == 'alt':
             last_alt_time = time.time()
         elif keyboard_event.name == 'shift' and time.time() - last_alt_time < 0.5:
             print("Combo 'left alt + left shift' pressed")
 
-            
             sb.run(nt_path)
 
 
 # Nastavení posluchače na zachycení kláves
-keyboard.on_press(on_key_event)
+# keyboard.on_press(on_key_event)
 
 # Pokud chcete zachytávat události klávesnice i mimo hlavní smyčku, můžete použít keyboard.wait()
 # keyboard.wait()
+
+
+def initialize_listener():
+    # Nastavení posluchače na zachycení kláves
+    keyboard.on_press(on_key_event)
+    print("Listener initialized")
+
+# Funkce pro spuštění skriptu na základě uložené klávesové zkratky
+
+
+def run_script():
+    initialize_listener()
+    print("Listening for key triggering")
+    while True:
+        time.sleep(1)
+
+# Načtěte klávesovou zkratku z pickle souboru
+# try:
+#     with open('settings.pkl', 'rb') as file:
+#         hotkey = pickle.load(file)
+# except FileNotFoundError:
+#     hotkey = 'ctrl+alt+r'  # Defaultní klávesová zkratka, pokud soubor není nalezen
+
+
+# Nastavení klávesové zkratky
+keyboard.add_hotkey(HotkeyType.START_HOOK, run_script)
+
+
 print("Listening for key triggering")
 while True:
     time.sleep(1)
