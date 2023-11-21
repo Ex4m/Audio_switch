@@ -10,7 +10,14 @@ e = SetupStuff()
 
 # -------------------------------------------------------------------
 # pythonw.exe your_script.py     to run without any window
-# Start Hook zatím nefunguje
+#  - vymazat vyskakující okno u engine.py
+#  - spustit pws skript nenápadněji ? vyskočí modré okno
+#  - přetavit do exe souboru a ten se bude spouštět podprahově. TEST jak funguje a jaký má vliv na CPU
+#  - vyřešit přejmenování id a tím nefunkčnost pws skriptu a nutnost jeho nového generování
+#  - může pomoci ukládání do dict key: bedny123 value: id se bude dynamicky prohledávat
+#  - bude fungovat automaticky. pokud selze prepnutí tak se spustí smyčka s kodem která jej obnoví. Muze být v Engine.py
+#  -
+#  -
 # -------------------------------------------------------------------
 if getattr(sys, 'frozen', False):
     current_directory = sys._MEIPASS
@@ -23,15 +30,29 @@ start_key = e.get_hotKey(HotkeyType.START_HOOK)
 end_key = e.get_hotKey(HotkeyType.END_HOOK)
 print(f"Trigger:{trigger_key}\nStart hook:{start_key}\nEnd hook:{end_key}")
 hook_active = True
-swapper = "swapper.ps1"  # "Audio_switch.exe"
+swapper = "swapper.ps1"
 last_alt_time = 0
 inform = True
 
 
-def toggle_hook():
+def initialize_listener():
+    # Nastavení posluchače na zachycení kláves
+    keyboard.on_press(on_key_event)
+    print("Listener initialized")
+
+
+def start_listener():
     global hook_active
-    hook_active = not hook_active
-    print(f"Hook {'enabled' if hook_active else 'disabled'}")
+    hook_active = True
+    initialize_listener()
+    print("Listening for key triggering")
+
+
+def stop_listener():
+    global hook_active
+    hook_active = False
+    print("Listener stopped")
+    keyboard.unhook_all()
 
 
 def locate_file(file, current_directory):
@@ -41,6 +62,34 @@ def locate_file(file, current_directory):
     return None
 
 
+def on_key_event(keyboard_event):
+    global hook_active
+    global last_alt_time
+    if hook_active:
+        if inform:
+            print(f"Pressed key:" + keyboard_event.name)
+        if keyboard_event.name == trigger_key:
+            print(f"{trigger_key} was pressed, executing powershell script...")
+            try:
+                swapper_path = locate_file(swapper, current_directory)
+                if swapper_path is None:
+                    print("Exe not found")
+                else:
+                    print(f"PWS Swapper found on this path {swapper_path}")
+                    sb.run(["powershell", "-File", swapper_path])
+            except Exception as e:
+                print(f"An error occurred: {str(e)}")
+
+
+keyboard.add_hotkey(start_key, start_listener)
+keyboard.add_hotkey(end_key, stop_listener)
+
+print("Listening for key triggering")
+while True:
+    time.sleep(1)
+
+
+# WIP TASKBAR SWITCH SCHEME //////////////////////////
 # class ThemeSwitcher:
 #     def __init__(self):
 #         self.switch = False
@@ -63,82 +112,3 @@ def locate_file(file, current_directory):
 # $proc = Get-Process | Where-Object { $_.Name -eq "NiceTaskbar" }
 # $proc.Id
 # $proc.Id
-
-
-nt_path = 'C:\\Program Files\\WindowsApps\\30881xwl.NiceTaskbar_1.0.6.0_x86__9ammpd0196578\\NiceTaskbar.exe'
-
-
-def on_key_event(keyboard_event):
-    global hook_active
-    global last_alt_time
-    if hook_active:
-        if inform:
-            print(f"Pressed key:" + keyboard_event.name)
-        if keyboard_event.name == trigger_key:
-            print(f"{trigger_key} was pressed, executing powershell script...")
-            try:
-                # exe_path = locate_file(swapper, current_directory)
-                swapper_path = locate_file(swapper, current_directory)
-                if swapper_path is None:
-                    print("Exe not found")
-                else:
-                    print(f"PWS Swapper found on this path {swapper_path}")
-                    # sb.run([exe_path], shell=True)
-                    # script_path = f"{current_directory}\\swapper.ps1"
-                    sb.run(["powershell", "-File", swapper_path])
-                    # sb.run(exe_path)
-            except Exception as e:
-                print(f"An error occurred: {str(e)}")
-
-        elif keyboard_event.name == start_key:
-            print(f"{start_key} was pressed, starting hook...")
-            hook_active = True
-
-        elif keyboard_event.name == end_key:
-            print(f"{end_key} was pressed, stopping hook...")
-            hook_active = False
-
-        if keyboard_event.name == 'alt':
-            last_alt_time = time.time()
-        elif keyboard_event.name == 'shift' and time.time() - last_alt_time < 0.5:
-            print("Combo 'left alt + left shift' pressed")
-
-            sb.run(nt_path)
-
-
-# Nastavení posluchače na zachycení kláves
-# keyboard.on_press(on_key_event)
-
-# Pokud chcete zachytávat události klávesnice i mimo hlavní smyčku, můžete použít keyboard.wait()
-# keyboard.wait()
-
-
-def initialize_listener():
-    # Nastavení posluchače na zachycení kláves
-    keyboard.on_press(on_key_event)
-    print("Listener initialized")
-
-# Funkce pro spuštění skriptu na základě uložené klávesové zkratky
-
-
-def run_script():
-    initialize_listener()
-    print("Listening for key triggering")
-    while True:
-        time.sleep(1)
-
-# Načtěte klávesovou zkratku z pickle souboru
-# try:
-#     with open('settings.pkl', 'rb') as file:
-#         hotkey = pickle.load(file)
-# except FileNotFoundError:
-#     hotkey = 'ctrl+alt+r'  # Defaultní klávesová zkratka, pokud soubor není nalezen
-
-
-# Nastavení klávesové zkratky
-keyboard.add_hotkey(HotkeyType.START_HOOK, run_script)
-
-
-print("Listening for key triggering")
-while True:
-    time.sleep(1)
