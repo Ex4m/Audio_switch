@@ -1,5 +1,4 @@
-# !/usr/bin/env python
-# %%
+# # !/usr/bin/env python
 import subprocess as sb
 import re
 import ctypes

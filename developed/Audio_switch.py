@@ -10,8 +10,9 @@ e = SetupStuff()
 
 # -------------------------------------------------------------------
 # pythonw.exe your_script.py     to run without any window
-#  - vymazat vyskakující okno u engine.py
-#  - spustit pws skript nenápadněji ? vyskočí modré okno
+#  - DONE - vymazat vyskakující okno u engine.py . Je to kv;li shebangu # !/usr/bin/env python
+#  - DONE - spustit pws skript nenápadněji ? vyskočí modré okno
+#  - nefunguje opětovné spustění souboru startHookem
 #  - přetavit do exe souboru a ten se bude spouštět podprahově. TEST jak funguje a jaký má vliv na CPU
 #  - vyřešit přejmenování id a tím nefunkčnost pws skriptu a nutnost jeho nového generování
 #  - může pomoci ukládání do dict key: bedny123 value: id se bude dynamicky prohledávat
@@ -52,7 +53,7 @@ def stop_listener():
     global hook_active
     hook_active = False
     print("Listener stopped")
-    keyboard.unhook_all()
+    # keyboard.unhook_all()
 
 
 def locate_file(file, current_directory):
@@ -76,7 +77,8 @@ def on_key_event(keyboard_event):
                     print("Exe not found")
                 else:
                     print(f"PWS Swapper found on this path {swapper_path}")
-                    sb.run(["powershell", "-File", swapper_path])
+                    sb.run(["powershell", "-File", swapper_path,
+                           "-WindowStyle", "Hidden"])
             except Exception as e:
                 print(f"An error occurred: {str(e)}")
 
