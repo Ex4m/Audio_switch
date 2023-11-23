@@ -12,7 +12,7 @@ e = SetupStuff()
 # pythonw.exe your_script.py     to run without any window
 #  - DONE - vymazat vyskakující okno u engine.py . Je to kv;li shebangu # !/usr/bin/env python
 #  - DONE - spustit pws skript nenápadněji ? vyskočí modré okno
-#  - nefunguje opětovné spustění souboru startHookem
+#  - DONE - nefunguje opětovné spustění souboru startHookem
 #  - přetavit do exe souboru a ten se bude spouštět podprahově. TEST jak funguje a jaký má vliv na CPU
 #  - vyřešit přejmenování id a tím nefunkčnost pws skriptu a nutnost jeho nového generování
 #  - může pomoci ukládání do dict key: bedny123 value: id se bude dynamicky prohledávat
@@ -37,7 +37,6 @@ inform = True
 
 
 def initialize_listener():
-    # Nastavení posluchače na zachycení kláves
     keyboard.on_press(on_key_event)
     print("Listener initialized")
 
@@ -47,13 +46,15 @@ def start_listener():
     hook_active = True
     initialize_listener()
     print("Listening for key triggering")
+    keyboard.add_hotkey(end_key, stop_listener)
 
 
 def stop_listener():
     global hook_active
     hook_active = False
     print("Listener stopped")
-    # keyboard.unhook_all()
+    keyboard.unhook_all()
+    keyboard.add_hotkey(start_key, start_listener)
 
 
 def locate_file(file, current_directory):
@@ -87,8 +88,7 @@ keyboard.add_hotkey(start_key, start_listener)
 keyboard.add_hotkey(end_key, stop_listener)
 
 print("Listening for key triggering")
-while True:
-    time.sleep(1)
+keyboard.wait()
 
 
 # WIP TASKBAR SWITCH SCHEME //////////////////////////
