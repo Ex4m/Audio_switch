@@ -2,7 +2,6 @@ import subprocess as sb
 import os
 import keyboard
 from Engine import SetupStuff, HotkeyType
-import time
 import sys
 import pickle
 
