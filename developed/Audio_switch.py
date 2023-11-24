@@ -1,93 +1,112 @@
 import subprocess as sb
 import os
 import keyboard
-from Engine import SetupStuff, HotkeyType
 import time
 import sys
 import pickle
+from enum import Enum
 
-e = SetupStuff()
 
 # -------------------------------------------------------------------
 # pythonw.exe your_script.py     to run without any window
 #  - DONE - vymazat vyskakující okno u engine.py . Je to kv;li shebangu # !/usr/bin/env python
 #  - DONE - spustit pws skript nenápadněji ? vyskočí modré okno
 #  - DONE - nefunguje opětovné spustění souboru startHookem
-#  - přetavit do exe souboru a ten se bude spouštět podprahově. TEST jak funguje a jaký má vliv na CPU
+#  - DONE - přeprasat Audio_switch do OOP
+#  - 50 % přetavit do exe souboru a ten se bude spouštět podprahově. TEST jak funguje a jaký má vliv na CPU
 #  - vyřešit přejmenování id a tím nefunkčnost pws skriptu a nutnost jeho nového generování
 #  - může pomoci ukládání do dict key: bedny123 value: id se bude dynamicky prohledávat
 #  - bude fungovat automaticky. pokud selze prepnutí tak se spustí smyčka s kodem která jej obnoví. Muze být v Engine.py
 #  -
 #  -
 # -------------------------------------------------------------------
-if getattr(sys, 'frozen', False):
-    current_directory = sys._MEIPASS
-else:
-    current_directory = os.path.dirname(os.path.realpath(__file__))
-
-print(current_directory)
-trigger_key = e.get_hotKey(HotkeyType.TRIGGER)
-start_key = e.get_hotKey(HotkeyType.START_HOOK)
-end_key = e.get_hotKey(HotkeyType.END_HOOK)
-print(f"Trigger:{trigger_key}\nStart hook:{start_key}\nEnd hook:{end_key}")
-hook_active = True
-swapper = "swapper.ps1"
-last_alt_time = 0
-inform = True
 
 
-def initialize_listener():
-    keyboard.on_press(on_key_event)
-    print("Listener initialized")
+class HotkeyType(Enum):
+    TRIGGER = 1
+    START_HOOK = 2
+    END_HOOK = 3
 
 
-def start_listener():
-    global hook_active
-    hook_active = True
-    initialize_listener()
-    print("Listening for key triggering")
-    keyboard.add_hotkey(end_key, stop_listener)
+class AudioSwitch:
+    def __init__(self, hook_active=True, swapper="swapper.ps1", inform=True, last_alt_time=0) -> None:
+        self.hook_active = hook_active
+        self.swapper = swapper
+        self.inform = inform
+        self.last_alt_time = last_alt_time
+        self.trigger_key = None
+        self.start_key = None
+        self.end_key = None
+        self.current_dir = None
+        self.get_current_dir()
+        self.get_hotkeys()
+        keyboard.add_hotkey(self.start_key, self.start_listener)
+        keyboard.add_hotkey(self.end_key, self.stop_listener)
+        self.initialize_listener()
+
+    def get_hotkeys(self, path=os.path.dirname(os.path.realpath(__file__))):
+        try:
+            with open(f"{path}\\settings.pkl", 'rb') as f:
+                hotkey_bounds = pickle.load(f)
+                self.trigger_key = hotkey_bounds.get(HotkeyType.TRIGGER)
+                self.start_key = hotkey_bounds.get(HotkeyType.START_HOOK)
+                self.end_key = hotkey_bounds.get(HotkeyType.END_HOOK)
+            print(
+                f"Trigger:{self.trigger_key}\nStart hook:{self.start_key}\nEnd hook:{self.end_key}")
+
+        except Exception as error:
+            print(error)
+
+    def get_current_dir(self):
+        if getattr(sys, 'frozen', False):
+            self.current_dir = sys._MEIPASS
+        else:
+            self.current_dir = os.path.dirname(os.path.realpath(__file__))
+
+    def initialize_listener(self):
+        keyboard.on_press_key(self.trigger_key, self.on_key_event)
+        print("Listener initialized")
+
+    def start_listener(self):
+        self.hook_active = True
+        self.initialize_listener()
+        print("Listening for key triggering")
+        keyboard.add_hotkey(self.end_key, self.stop_listener)
+
+    def stop_listener(self):
+        self.hook_active = False
+        print("Listener stopped")
+        keyboard.unhook_all()
+        keyboard.add_hotkey(self.start_key, self.start_listener)
+
+    def on_key_event(self, event):
+        if self.hook_active:
+            if self.inform:
+                print(f"Pressed key: {event.name}")
+            if event.name == self.trigger_key:
+                print(
+                    f"{self.trigger_key} was pressed, executing powershell script...")
+                try:
+                    swapper_path = self.locate_file(
+                        self.swapper, self.current_dir)
+                    if swapper_path is None:
+                        print("Exe not found")
+                    else:
+                        print(f"PWS Swapper found on this path {swapper_path}")
+                        sb.run(["powershell", "-File", swapper_path,
+                               "-WindowStyle", "Hidden"])
+                except Exception as e:
+                    print(f"An error occurred: {str(e)}")
+
+    def locate_file(self, file, current_directory):
+        for root, directory, files in os.walk(current_directory):
+            if file in files:
+                return os.path.join(root, file)
+        return None
 
 
-def stop_listener():
-    global hook_active
-    hook_active = False
-    print("Listener stopped")
-    keyboard.unhook_all()
-    keyboard.add_hotkey(start_key, start_listener)
-
-
-def locate_file(file, current_directory):
-    for root, directory, files in os.walk(current_directory):
-        if file in files:
-            return os.path.join(root, file)
-    return None
-
-
-def on_key_event(keyboard_event):
-    global hook_active
-    global last_alt_time
-    if hook_active:
-        if inform:
-            print(f"Pressed key:" + keyboard_event.name)
-        if keyboard_event.name == trigger_key:
-            print(f"{trigger_key} was pressed, executing powershell script...")
-            try:
-                swapper_path = locate_file(swapper, current_directory)
-                if swapper_path is None:
-                    print("Exe not found")
-                else:
-                    print(f"PWS Swapper found on this path {swapper_path}")
-                    sb.run(["powershell", "-File", swapper_path,
-                           "-WindowStyle", "Hidden"])
-            except Exception as e:
-                print(f"An error occurred: {str(e)}")
-
-
-keyboard.add_hotkey(start_key, start_listener)
-keyboard.add_hotkey(end_key, stop_listener)
-
-print("Listening for key triggering")
+# Vytvoření instance třídy AudioSwitch
+audio_switch = AudioSwitch()
 keyboard.wait()
 
 
