@@ -13,7 +13,7 @@ from enum import Enum
 #  - DONE - spustit pws skript nenápadněji ? vyskočí modré okno
 #  - DONE - nefunguje opětovné spustění souboru startHookem
 #  - DONE - přeprasat Audio_switch do OOP
-#  - 50 % přetavit do exe souboru a ten se bude spouštět podprahově. TEST jak funguje a jaký má vliv na CPU
+#  - 80 % přetavit do exe souboru a ten se bude spouštět podprahově. TEST jak funguje a jaký má vliv na CPU
 #  - vyřešit přejmenování id a tím nefunkčnost pws skriptu a nutnost jeho nového generování
 #  - může pomoci ukládání do dict key: bedny123 value: id se bude dynamicky prohledávat
 #  - bude fungovat automaticky. pokud selze prepnutí tak se spustí smyčka s kodem která jej obnoví. Muze být v Engine.py
@@ -44,9 +44,9 @@ class AudioSwitch:
         keyboard.add_hotkey(self.end_key, self.stop_listener)
         self.initialize_listener()
 
-    def get_hotkeys(self, path=os.path.dirname(os.path.realpath(__file__))):
+    def get_hotkeys(self):
         try:
-            with open(f"{path}\\settings.pkl", 'rb') as f:
+            with open(os.path.join(self.current_dir, 'settings.pkl'), 'rb') as f:
                 hotkey_bounds = pickle.load(f)
                 self.trigger_key = hotkey_bounds.get(HotkeyType.TRIGGER)
                 self.start_key = hotkey_bounds.get(HotkeyType.START_HOOK)
@@ -58,10 +58,7 @@ class AudioSwitch:
             print(error)
 
     def get_current_dir(self):
-        if getattr(sys, 'frozen', False):
-            self.current_dir = sys._MEIPASS
-        else:
-            self.current_dir = os.path.dirname(os.path.realpath(__file__))
+        self.current_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
     def initialize_listener(self):
         keyboard.on_press_key(self.trigger_key, self.on_key_event)
