@@ -5,7 +5,7 @@ import time
 import sys
 import pickle
 from enum import Enum
-
+import shutil
 
 # -------------------------------------------------------------------
 # pythonw.exe your_script.py     to run without any window
@@ -13,11 +13,11 @@ from enum import Enum
 #  - DONE - spustit pws skript nenápadněji ? vyskočí modré okno
 #  - DONE - nefunguje opětovné spustění souboru startHookem
 #  - DONE - přeprasat Audio_switch do OOP
-#  - 80 % přetavit do exe souboru a ten se bude spouštět podprahově. TEST jak funguje a jaký má vliv na CPU
+#  - 80% přetavit do exe souboru a ten se bude spouštět podprahově. TEST jak funguje a jaký má vliv na CPU
+#  - 70% winStart - Chci mít v engine nebo zde ? dát uživateli možnost nastavení přes settings.pkl? C:\Users\Exa\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup
 #  - vyřešit přejmenování id a tím nefunkčnost pws skriptu a nutnost jeho nového generování
 #  - může pomoci ukládání do dict key: bedny123 value: id se bude dynamicky prohledávat
 #  - bude fungovat automaticky. pokud selze prepnutí tak se spustí smyčka s kodem která jej obnoví. Muze být v Engine.py
-#  -
 #  -
 # -------------------------------------------------------------------
 
@@ -38,11 +38,25 @@ class AudioSwitch:
         self.start_key = None
         self.end_key = None
         self.current_dir = None
+        self.check_startup()
         self.get_current_dir()
         self.get_hotkeys()
         keyboard.add_hotkey(self.start_key, self.start_listener)
         keyboard.add_hotkey(self.end_key, self.stop_listener)
         self.initialize_listener()
+
+    def check_startup(self):
+        startup_folder = os.path.join(
+            os.environ['APPDATA'], 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+        thisFilePath = os.path.basename(sys.argv[0])
+
+        shortcut_path = os.path.join(startup_folder, thisFilePath)
+        if not os.path.exists(shortcut_path):
+            try:
+                shutil.copy(sys.argv[0], startup_folder)
+                print("Skript byl úspěšně přidán do složky Startup.")
+            except Exception as e:
+                print(f"Chyba při přidávání do složky Startup: {e}")
 
     def get_hotkeys(self):
         try:
