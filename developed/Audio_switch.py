@@ -5,7 +5,11 @@ import time
 import sys
 import pickle
 from enum import Enum
+import os
+import sys
 import shutil
+import pythoncom
+from win32com.client import Dispatch
 
 # -------------------------------------------------------------------
 # pythonw.exe your_script.py     to run without any window
@@ -13,12 +17,14 @@ import shutil
 #  - DONE - spustit pws skript nenápadněji ? vyskočí modré okno
 #  - DONE - nefunguje opětovné spustění souboru startHookem
 #  - DONE - přeprasat Audio_switch do OOP
+#  - DONE - poslat do WINSTARTU zástupce
 #  - 80% přetavit do exe souboru a ten se bude spouštět podprahově. TEST jak funguje a jaký má vliv na CPU
 #  - 70% winStart - Chci mít v engine nebo zde ? dát uživateli možnost nastavení přes settings.pkl? C:\Users\Exa\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup
-#  - vyřešit přejmenování id a tím nefunkčnost pws skriptu a nutnost jeho nového generování
+#  - 30% vyřešit přejmenování id a tím nefunkčnost pws skriptu a nutnost jeho nového generování
 #  - může pomoci ukládání do dict key: bedny123 value: id se bude dynamicky prohledávat
 #  - bude fungovat automaticky. pokud selze prepnutí tak se spustí smyčka s kodem která jej obnoví. Muze být v Engine.py
-#  -
+#  - Engine GUI ?
+#  - Set Hotkey se bude dělat skrze dict a uživatel bude mít menu i tam ?
 # -------------------------------------------------------------------
 
 
@@ -48,15 +54,25 @@ class AudioSwitch:
     def check_startup(self):
         startup_folder = os.path.join(
             os.environ['APPDATA'], 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
-        thisFilePath = os.path.basename(sys.argv[0])
+        this_file_path = sys.argv[0]
 
-        shortcut_path = os.path.join(startup_folder, thisFilePath)
+        # Získání názvu souboru bez přípony pro název zástupce
+        this_file_name = os.path.splitext(os.path.basename(this_file_path))[0]
+
+        shortcut_path = os.path.join(startup_folder, f"{this_file_name}.lnk")
         if not os.path.exists(shortcut_path):
             try:
-                shutil.copy(sys.argv[0], startup_folder)
-                print("Skript byl úspěšně přidán do složky Startup.")
+                self.create_shortcut(this_file_path, shortcut_path)
+                print("Zástupce skriptu byl úspěšně přidán do složky Startup.")
             except Exception as e:
-                print(f"Chyba při přidávání do složky Startup: {e}")
+                print(f"Chyba při vytváření zástupce ve složce Startup: {e}")
+
+    def create_shortcut(self, target_path, shortcut_path):
+        shell = Dispatch('WScript.Shell')
+        shortcut = shell.CreateShortcut(shortcut_path)
+        shortcut.TargetPath = target_path
+        shortcut.WorkingDirectory = os.path.dirname(target_path)
+        shortcut.Save()
 
     def get_hotkeys(self):
         try:
