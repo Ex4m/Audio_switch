@@ -49,6 +49,7 @@ class AudioSwitch:
         self.get_hotkeys()
         keyboard.add_hotkey(self.start_key, self.start_listener)
         keyboard.add_hotkey(self.end_key, self.stop_listener)
+        # self.run_NiceTaskbar()
         self.initialize_listener()
 
     def check_startup(self):
@@ -131,9 +132,15 @@ class AudioSwitch:
                 return os.path.join(root, file)
         return None
 
+    # def run_NiceTaskbar(self):
+    #     path = self.locate_file('NiceTaskbar enabler.py', self.current_dir)
+    #     sb.run(["python", path])
+
 
 # Vytvoření instance třídy AudioSwitch
 audio_switch = AudioSwitch()
+
+
 keyboard.wait()
 
 
