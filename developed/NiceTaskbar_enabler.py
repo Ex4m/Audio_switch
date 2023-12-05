@@ -107,6 +107,30 @@ keyboard_dict = {
     "0x49C": "qps-Latn-x-t-iq",  # Pseudo Language
 }
 
+
+def refresh_taskbar():
+    # Odeslat zprávu o změně nastavení do taskbaru
+    ctypes.windll.user32.SendNotifyMessageW(
+        0xFFFF, 0x001A, 0, ctypes.create_unicode_buffer("TraySettings"))
+    print("Něco jsem poslal messagem")
+    time.sleep(4)
+    # Simulujte stisk klávesy WIN
+    ctypes.windll.user32.keybd_event(0x5B, 0, 0, 0)  # Stisk klávesy WIN
+    ctypes.windll.user32.keybd_event(
+        0x5B, 0, 0x0002, 0)  # Uvolnění klávesy WIN
+
+    print("zmáčkl jsem WIN")
+    # Počkejte krátkou dobu, než se otevře nabídka Start
+    time.sleep(4)
+
+    # Simulujte stisk klávesy ESC
+    ctypes.windll.user32.keybd_event(0x1B, 0, 0, 0)  # Stisk klávesy ESC
+    ctypes.windll.user32.keybd_event(
+        0x1B, 0, 0x0002, 0)  # Uvolnění klávesy ESC
+    print("zmáčkl jsem ESC")
+
+
+# Aktualizovat taskbar
 enable = True
 lastId = ''
 switchPrint = 0
@@ -133,10 +157,11 @@ while True:
     # Disable
     elif keyboard_dict[lid_hex] == 'en-US' and lastId != 'en-US':
 
+        # refresh_taskbar()
+
         # Zastavit aplikaci NiceTaskbar
         sb.run(["powershell", "Stop-Process -Name 'NiceTaskbar' -Force"],
                capture_output=True, text=True)
-        # time.sleep(1)
         # definovat konstanty
         HWND_BROADCAST = 0xFFFF
         WM_SETTINGCHANGE = 0x001A
@@ -145,25 +170,12 @@ while True:
         windll.user32.SendNotifyMessageW(
             HWND_BROADCAST, WM_SETTINGCHANGE, 0, wintypes.LPCWSTR("TraySettings"))
 
+        # time.sleep(0.1)
         keyboard.press_and_release('win')
         time.sleep(0.2)
         keyboard.press_and_release('esc')
-
-        # Načíst knihovnu user32
-        # user32 = ctypes.WinDLL('user32', use_last_error=True)
-
-        # # Definovat konstanty pro zobrazení nebo skrytí okna
-        # SW_HIDE = 0
-        # SW_SHOW = 5
-
-        # # Získat handle taskbaru
-        # taskbar = user32.FindWindowW("Shell_TrayWnd", None)
-
-        # # Skrýt taskbar
-        # user32.ShowWindow(taskbar, SW_HIDE)
-
-        # # Zobrazit taskbar
-        # user32.ShowWindow(taskbar, SW_SHOW)
+        time.sleep(0.2)
+        keyboard.press_and_release('esc')
 
         print("Vypnuto") if switchPrint else ''
 
